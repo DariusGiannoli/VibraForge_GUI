@@ -1,6 +1,6 @@
 import os
 from typing import Optional
-from phantom_engine import PreviewBundle
+from ..phantom_engine import PreviewBundle
 
 PREVIEWS_DIR = "saved_previews"
 

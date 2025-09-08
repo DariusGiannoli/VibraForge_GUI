@@ -32,18 +32,18 @@ from PyQt6.QtWidgets import (
     QSplitter, QTableWidget, QTableWidgetItem, QAbstractItemView
 )
 
-# --- [PHANTOMS] extra imports ---
-from phantom_engine import PhantomEngine, PreviewBundle
-from phantom_preview_canvas import PhantomPreviewCanvas
-from preview_storage import save_bundle, load_bundle, list_bundles
-
-# Project imports
+from core import PhantomEngine, PreviewBundle
+from core.storage import save_bundle, load_bundle, list_bundles
+main_gui_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(main_gui_dir)
 from python_serial_api import python_serial_api
-from vibration_patterns import *
-from flexible_actuator_selector import FlexibleActuatorSelector
+from core.vibration_patterns import *
+from gui.widgets.flexible_actuator_selector import FlexibleActuatorSelector
+from gui.widgets.phantom_preview_canvas import PhantomPreviewCanvas
 
 # Event model helpers (JSON/CSV → HapticEvent)
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+main_gui_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(main_gui_dir)
 try:
     from data.event_data_model import (
         HapticEvent, WaveformData, load_csv_waveform,
@@ -4095,9 +4095,10 @@ class HapticPatternGUI(QMainWindow):
         self.menu_waveform.addAction(self.act_refresh_library)
 
     def _open_waveform_designer(self):
-        # .../Main_GUI/data/universal_event_designer.py
-        here = os.path.dirname(os.path.abspath(__file__))
-        designer = os.path.join(os.path.dirname(here), "data", "universal_event_designer.py")
+        here = os.path.dirname(os.path.abspath(__file__))  # gui/
+        pattern_generator = os.path.dirname(here)          # Pattern_Generator/
+        main_gui = os.path.dirname(pattern_generator)      # Main_GUI/
+        designer = os.path.join(main_gui, "data", "universal_event_designer.py")
         if not os.path.exists(designer):
             QMessageBox.critical(self, "Not found", f"Designer not found:\n{designer}")
             return

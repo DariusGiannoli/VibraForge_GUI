@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import Qt, QTimer, QPointF
 from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont
 
-from phantom_engine import PreviewBundle, PhantomStep
+from core.phantom_engine import PreviewBundle, PhantomStep
 
 class PhantomPreviewCanvas(QWidget):
     """

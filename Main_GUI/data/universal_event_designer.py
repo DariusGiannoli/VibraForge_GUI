@@ -147,6 +147,8 @@ def generate_builtin_waveform(
 # ---------- your models/widgets ----------
 from event_data_model import HapticEvent, EventCategory, WaveformData
 from waveform_editor_widget import WaveformEditorWidget
+import sys, os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))  # Main_GUI/
 from python_serial_api import python_serial_api
 
 # ---------- theme ----------
