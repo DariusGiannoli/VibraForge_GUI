@@ -1,0 +1,54 @@
+{
+  "name": "Testing Preview",
+  "description": "Timeline sequence",
+  "timestamp": "2025-08-28T02:51:32.435470",
+  "config": {
+    "pattern_type": "Timeline",
+    "actuators": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "intensity": 7,
+    "frequency": 4,
+    "timeline": [
+      {
+        "actuator": 0,
+        "start": 0.0,
+        "end": 2.0,
+        "waveform": {
+          "source": "Waveform Library",
+          "name": "250"
+        }
+      },
+      {
+        "actuator": 1,
+        "start": 2.0,
+        "end": 3.0,
+        "waveform": {
+          "source": "Waveform Library",
+          "name": "250"
+        }
+      },
+      {
+        "actuator": 2,
+        "start": 3.0,
+        "end": 4.0,
+        "waveform": {
+          "source": "Waveform Library",
+          "name": "250"
+        }
+      },
+      {
+        "actuator": 3,
+        "start": 4.0,
+        "end": 5.0,
+        "waveform": {
+          "source": "Waveform Library",
+          "name": "250"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,342 @@
+/* Haptic Pro — Contrast+ v2 (Qt 6) */
+/* Focus: lisibilité, contrastes, cohérence, mini-palette flottante */
+
+* { outline: none; }
+
+/* ---------- Base ---------- */
+QMainWindow, QWidget {
+  background: #F5F7FA;
+  color: #0F172A;                                /* slate-900 */
+  font-family: -apple-system, "SF Pro Text", Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;                                /* +1 */
+}
+
+/* ---------- Containers ---------- */
+QGroupBox {
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;                      /* slate-300 */
+  border-radius: 10px;
+  margin-top: 12px;
+  padding: 10px 10px 12px 10px;
+}
+QGroupBox::title {
+  subcontrol-origin: margin;
+  left: 12px;
+  padding: 0px 4px;
+  color: #0F172A;
+  font-weight: 600;
+  background: transparent;
+}
+
+/* Tabs */
+QTabWidget::pane {
+  border: 1px solid #D1D5DB;
+  border-radius: 10px;
+  top: -1px;
+  background: #FFFFFF;
+}
+QTabBar::tab {
+  background: #EEF2F7;
+  border: 1px solid #D1D5DB;
+  padding: 8px 14px;
+  margin-right: 4px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  color: #1F2937;
+}
+QTabBar::tab:selected {
+  background: #FFFFFF;
+  color: #0F172A;
+  border-bottom: 1px solid #FFFFFF;
+  font-weight: 700;
+}
+QTabBar::tab:hover { background: #E5E7EB; }
+
+/* ---------- Text / Lists ---------- */
+QLabel { color: #0F172A; }
+
+QTextEdit, QPlainTextEdit, QListWidget, QTreeView, QTableView, QScrollArea {
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+}
+
+#infoTextEdit {
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  padding: 8px;
+  color: #0F172A;
+}
+#waveformInfoLabel, #patternDescLabel {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 8px;
+  color: #374151;                                  /* slate-700 */
+  font-style: italic;
+}
+
+QListWidget::item { padding: 6px 8px; }
+QListWidget::item:selected { background: #DBEAFE; color: #111827; }
+
+/* ---------- Buttons ---------- */
+QPushButton {
+  background: #FFFFFF;
+  border: 1px solid #9CA3AF;
+  color: #0F172A;
+  border-radius: 10px;
+  padding: 7px 12px;
+  min-width: 96px; min-height: 28px;
+  font-size: 12px;
+}
+QPushButton:hover   { background: #F3F4F6; }
+QPushButton:pressed { background: #E5E7EB; }
+
+/* Focus ring sans changement de taille */
+QPushButton:focus {
+  border: 2px solid #2563EB;
+  padding: 6px 11px;                               /* compense le border +1 */
+}
+
+QPushButton:disabled {
+  color: #6B7280;
+  border-color: #E5E7EB;
+  background: #F9FAFB;
+}
+
+/* Primary actions */
+QPushButton#startButton, QPushButton#saveButton,
+QPushButton#loadToWaveformBtn, QPushButton#loadSelectedBtn {
+  background: #2563EB;
+  border: 1px solid #1D4ED8;
+  color: #FFFFFF;
+}
+QPushButton#startButton:hover, QPushButton#saveButton:hover,
+QPushButton#loadToWaveformBtn:hover, QPushButton#loadSelectedBtn:hover {
+  background: #1D4ED8;
+  border-color: #1E40AF;
+}
+
+/* Caution / stop */
+QPushButton#stopButton, QPushButton#emergencyStopButton {
+  background: #FEE2E2;
+  border: 1px solid #FCA5A5;
+  color: #991B1B;
+}
+QPushButton#stopButton:hover, QPushButton#emergencyStopButton:hover {
+  background: #FCA5A5;
+  color: #7F1D1D;
+}
+
+/* Toggle (Preview) checked state */
+QPushButton:checked {
+  background: #DBEAFE;
+  border-color: #93C5FD;
+  color: #1E3A8A;
+}
+
+/* ---------- Inputs ---------- */
+QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QDateTimeEdit {
+  background: #FFFFFF;
+  border: 1px solid #9CA3AF;
+  border-radius: 8px;
+  padding: 6px 8px;
+  selection-background-color: #DBEAFE;
+  selection-color: #0F172A;
+}
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus, QDateTimeEdit:focus {
+  border: 2px solid #2563EB;
+  padding: 5px 7px;                                 /* compense */
+}
+QAbstractSpinBox:disabled, QLineEdit:disabled, QComboBox:disabled {
+  color: #374151;
+  background: #F3F4F6;
+  border-color: #E5E7EB;
+}
+
+/* Combo popup */
+QComboBox QAbstractItemView {
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  selection-background-color: #DBEAFE;
+  selection-color: #111827;
+}
+
+/* Spin arrows */
+QAbstractSpinBox::up-button, QAbstractSpinBox::down-button {
+  width: 18px;
+  border: 1px solid #D1D5DB;
+  background: #F3F4F6;
+  border-radius: 6px;
+  margin: 0;
+}
+QAbstractSpinBox::up-button:hover, QAbstractSpinBox::down-button:hover { background: #E5E7EB; }
+QAbstractSpinBox::up-arrow, QAbstractSpinBox::down-arrow { width: 10px; height: 10px; }
+
+/* ---------- Sliders ---------- */
+QSlider::groove:horizontal {
+  height: 8px;
+  background: #E5E7EB;
+  border-radius: 4px;
+}
+QSlider::handle:horizontal {
+  width: 20px; height: 20px;
+  margin: -8px 0;
+  border-radius: 10px;
+  background: #2563EB;
+  border: 2px solid #FFFFFF;
+}
+
+/* ---------- Menus & Bars ---------- */
+QMenuBar { background: #FFFFFF; border-bottom: 1px solid #E5E7EB; }
+QMenuBar::item { padding: 6px 10px; background: transparent; }
+QMenuBar::item:selected { background: #F3F4F6; }
+
+QMenu { background: #FFFFFF; border: 1px solid #D1D5DB; border-radius: 8px; }
+QMenu::item { padding: 6px 12px; }
+QMenu::item:selected { background: #DBEAFE; color: #111827; }
+
+QStatusBar { background: #FFFFFF; border-top: 1px solid #E5E7EB; color: #0F172A; }
+
+/* ---------- Scrollbars (unifiés) ---------- */
+QScrollBar:vertical, QScrollBar:horizontal {
+  background: #EEF2F7;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+}
+QScrollBar:vertical   { width: 12px;  margin: 4px 0; }
+QScrollBar:horizontal { height: 12px; margin: 0 4px; }
+QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+  background: #CBD5E1;
+  min-height: 24px; min-width: 24px;
+  border-radius: 6px;
+}
+QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover { background: #94A3B8; }
+QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }
+
+/* ---------- Tooltips ---------- */
+QToolTip {
+  background: #0F172A;
+  color: #F9FAFB;
+  border: 1px solid #0F172A;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+/* ---------- Tables / Headers ---------- */
+QTabWidget QWidget#qt_tabwidget_stackedwidget { background: #FFFFFF; border: none; }
+QHeaderView::section {
+  background: #F3F4F6;
+  color: #0F172A;
+  padding: 6px;
+  border: 1px solid #E5E7EB;
+}
+
+/* ---------- Canvas ---------- */
+/* Le QGraphicsView a frame none côté code; on style le viewport */
+QGraphicsView::viewport {
+  background: #F6F8FC;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+}
+
+/* ---------- Mini-palette flottante ---------- */
+#CanvasPalette {
+  background: rgba(255,255,255,0.92);
+  border: 1px solid #CBD5E1;
+  border-radius: 12px;
+}
+#CanvasPalette QToolButton {
+  min-width: 32px;                    /* ajuste ici pour “taille palette” */
+  min-height: 28px;
+  padding: 2px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid rgba(40,40,60,0.35);
+  background: rgba(120,130,255,0.22);
+  border-radius: 12px;
+}
+#CanvasPalette QToolButton:hover  { background: rgba(120,130,255,0.32); }
+#CanvasPalette QToolButton:pressed{ background: rgba(120,130,255,0.42); }
+/* Timeline params: compacter localement pour éviter l'effet "gros pills" */
+#TimelineParams QPushButton {
+  border-radius: 8px;           /* moins bombé = moins d'empiètement visuel */
+  padding: 6px 10px;
+}
+
+#TimelineParams QDoubleSpinBox,
+#TimelineParams QSpinBox {
+  min-width: 120px;             /* cohérent avec le patch Python */
+}
+
+#TimelineParams QAbstractSpinBox::up-button,
+#TimelineParams QAbstractSpinBox::down-button {
+  border-radius: 3px;           /* boutons flèche moins “pastille” */
+  margin: 0;
+/* ---------- Timeline: compact header (scoped) ---------- */
+#TimelineParams QLabel { padding-right: 4px; }
+
+/* Buttons plus denses uniquement dans Timeline */
+#TimelineParams QPushButton {
+  padding: 5px 8px;
+  min-width: 0;
+  min-height: 24px;
+  border-radius: 6px;
+}
+#TimelineParams QPushButton#addClipBtn { font-weight: 600; }
+
+/* Toggle "Parameters" */
+QToolButton#TimelineParamsToggle {
+  padding: 3px 6px;
+  min-height: 22px;
+  border: 1px solid #9CA3AF;
+  border-radius: 6px;
+  background: #FFFFFF;
+  color: #0F172A;
+}
+QToolButton#TimelineParamsToggle:hover   { background: #F3F4F6; }
+QToolButton#TimelineParamsToggle:checked { background: #DBEAFE; border-color: #93C5FD; }
+
+/* Spinboxes plus étroites dans Timeline uniquement */
+#TimelineParams QDoubleSpinBox,
+#TimelineParams QSpinBox {
+  min-width: 96px;
+  padding: 4px 6px;
+}
+
+/* Flèches compactes */
+#TimelineParams QAbstractSpinBox::up-button,
+#TimelineParams QAbstractSpinBox::down-button {
+  width: 14px;
+  border-radius: 3px;
+  margin: 0;
+}
+/* ─────────────────────────────────────────────────────────────
+   Drawing Studio — ultra-compact buttons
+   (applies only inside the Drawing Studio tab)
+   ───────────────────────────────────────────────────────────── */
+#DrawingStudioTab QPushButton {
+  padding: 2px 6px;       /* was 7px 12px */
+  min-width: 56px;        /* was 96px */
+  min-height: 20px;       /* was 28px */
+  font-size: 10px;        /* was 12px */
+  border-radius: 6px;     /* was 10px */
+  margin: 0;
+}
+
+/* keep the focus ring but compensate for added border */
+#DrawingStudioTab QPushButton:focus {
+  border: 2px solid #2563EB;
+  padding: 1px 5px;       /* 1px less vs normal state */
+}
+
+/* optional: even smaller tool buttons in Drawing Studio (if any) */
+#DrawingStudioTab QToolButton {
+  min-width: 18px;
+  min-height: 18px;
+  padding: 1px 4px;
+  font-size: 10px;
+  border-radius: 5px;
+  margin: 0;
+}
