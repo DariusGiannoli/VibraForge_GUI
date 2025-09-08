@@ -45,7 +45,7 @@ from gui.widgets.phantom_preview_canvas import PhantomPreviewCanvas
 main_gui_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(main_gui_dir)
 try:
-    from data.event_data_model import (
+    from waveform_designer.event_data_model import (
         HapticEvent, WaveformData, load_csv_waveform,
         EventMetadata, EventCategory,
     )
@@ -4098,7 +4098,7 @@ class HapticPatternGUI(QMainWindow):
         here = os.path.dirname(os.path.abspath(__file__))  # gui/
         pattern_generator = os.path.dirname(here)          # Pattern_Generator/
         main_gui = os.path.dirname(pattern_generator)      # Main_GUI/
-        designer = os.path.join(main_gui, "data", "universal_event_designer.py")
+        designer = os.path.join(main_gui, "waveform_designer", "universal_event_designer.py")
         if not os.path.exists(designer):
             QMessageBox.critical(self, "Not found", f"Designer not found:\n{designer}")
             return
