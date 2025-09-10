@@ -4114,17 +4114,47 @@ class HapticPatternGUI(QMainWindow):
 
     def _open_waveform_designer(self):
         here = os.path.dirname(os.path.abspath(__file__))  # gui/
-        pattern_generator = os.path.dirname(here)          # Pattern_Generator/
+        pattern_generator = os.path.dirname(here)          # pattern_generator/
         main_gui = os.path.dirname(pattern_generator)      # Main_GUI/
-        designer = os.path.join(main_gui, "waveform_designer", "event_designer", "universal_event_designer.py")
-        
-        if not os.path.exists(designer):
-            QMessageBox.critical(self, "Not found", f"Designer not found:\n{designer}")
-            return
-        
+
+        # We will launch the designer as a MODULE so that relative imports work
+        module_path = ["-m", "waveform_designer.event_designer.universal_event_designer"]
+
+        # Prepare process
         self._designer_proc = QProcess(self)
         self._designer_proc.finished.connect(lambda *_: self.refresh_waveforms())
-        self._designer_proc.start(sys.executable, [designer])
+
+        # 1) Ensure the working directory is Main_GUI so resources/paths resolve
+        self._designer_proc.setWorkingDirectory(main_gui)
+
+        # 2) Ensure PYTHONPATH contains Main_GUI (so absolute imports work even from IDE)
+        env = self._designer_proc.processEnvironment()
+        if env is None:
+            from PyQt6.QtCore import QProcessEnvironment
+            env = QProcessEnvironment.systemEnvironment()
+        existing = env.value("PYTHONPATH", "")
+        if existing:
+            env.insert("PYTHONPATH", f"{main_gui}{os.pathsep}{existing}")
+        else:
+            env.insert("PYTHONPATH", main_gui)
+        self._designer_proc.setProcessEnvironment(env)
+
+        # Optional: capture logs to your info panel
+        try:
+            self._designer_proc.readyReadStandardError.connect(
+                lambda: self._log_info(self._designer_proc.readAllStandardError().data().decode(errors='ignore'))
+            )
+            self._designer_proc.readyReadStandardOutput.connect(
+                lambda: self._log_info(self._designer_proc.readAllStandardOutput().data().decode(errors='ignore'))
+            )
+        except Exception:
+            pass
+
+        # Start using current Python interpreter and run as module
+        self._designer_proc.start(sys.executable, module_path)
+        if not self._designer_proc.waitForStarted(3000):
+            QMessageBox.critical(self, "Waveform Designer", "Failed to start Universal Event Designer.")
+            return
 
     def setup_connection_menu(self):
         """Build 'Connection' menu and move controls from the top bar into it."""

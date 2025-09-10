@@ -145,8 +145,20 @@ def generate_builtin_waveform(
     return t, y.astype(float, copy=False), float(sample_rate)
 
 # ---------- your models/widgets ----------
-from event_data_model import HapticEvent, EventCategory, WaveformData
-from ..waveform_widget.waveform_editor_widget import WaveformEditorWidget
+# --- imports that work both as a package (-m) and as a script ---
+try:
+    # When run as a package:  python -m waveform_designer.event_designer.universal_event_designer
+    from .event_data_model import HapticEvent, EventCategory, WaveformData
+except ImportError:
+    # Fallback when run directly from the folder (not recommended but handy)
+    from event_data_model import HapticEvent, EventCategory, WaveformData
+
+try:
+    # Package-relative import to the sibling package
+    from ..waveform_widget.waveform_editor_widget import WaveformEditorWidget
+except ImportError:
+    # Fallback when run directly
+    from waveform_widget.waveform_editor_widget import WaveformEditorWidget
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from communication import python_serial_api
