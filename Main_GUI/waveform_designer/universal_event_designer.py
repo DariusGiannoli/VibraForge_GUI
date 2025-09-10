@@ -149,7 +149,7 @@ from event_data_model import HapticEvent, EventCategory, WaveformData
 from waveform_editor_widget import WaveformEditorWidget
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from python_serial_api import python_serial_api
+from communication import python_serial_api
 
 # ---------- theme ----------
 def apply_ultra_clean_theme(app: QApplication) -> None:
@@ -269,7 +269,7 @@ class LibraryTree(QTreeWidget):
         drag = QDrag(self); drag.setMimeData(mime); drag.exec(Qt.DropAction.CopyAction)
 
 class EventLibraryManager:
-    
+
     def __init__(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))  # .../Main_GUI/waveform_designer
         main_gui = os.path.dirname(current_dir)                  # .../Main_GUI
