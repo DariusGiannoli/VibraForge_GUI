@@ -258,19 +258,20 @@ class WaveformLibraryManager:
     """
     EXT = (".json", ".csv", ".haptic")
 
+class WaveformLibraryManager:
+
+    EXT = (".json", ".csv", ".haptic")
+
     def __init__(self):
-        here = os.path.dirname(os.path.abspath(__file__))  # .../Main_GUI/Pattern_Generator
-        main_gui = os.path.dirname(here)                   # .../Main_GUI
-        # 1) Find repo root like the Designer (look for repo indicators)
-        project_root = here
-        indicators = ['requirements.txt', 'pyproject.toml', '.git', 'README.md', 'app.py', 'main.py']
-        for _ in range(6):
-            if any(os.path.exists(os.path.join(project_root, i)) for i in indicators):
-                break
-            parent = os.path.dirname(project_root)
-            if parent == project_root:
-                break
-            project_root = parent
+        here = os.path.dirname(os.path.abspath(__file__))  # .../Main_GUI/Pattern_Generator/gui
+        pattern_generator = os.path.dirname(here)          # .../Main_GUI/Pattern_Generator  
+        main_gui = os.path.dirname(pattern_generator)      # .../Main_GUI
+        project_root = os.path.dirname(main_gui)           # .../VibraForge_GUI
+        
+        # Vérification que c'est bien la racine
+        indicators = ['requirements.txt', 'pyproject.toml', '.git', 'README.md']
+        if not any(os.path.exists(os.path.join(project_root, i)) for i in indicators):
+            print(f"Warning: Project root indicators not found in {project_root}")
 
         root_lib = os.path.join(project_root, "waveform_library")
         alt_lib  = os.path.join(main_gui,    "waveform_library")
@@ -1507,8 +1508,21 @@ class TimelinePanel(QWidget):
     def _require_designer_page(self) -> bool:
         """Ensure the active canvas is 'Designer' (index 0)."""
         try:
-            return self._canvas_selector and self._canvas_selector.stack.currentIndex() == 0
-        except Exception:
+            if not self._canvas_selector:
+                print("DEBUG: _canvas_selector is None")
+                return False
+            
+            current_index = self._canvas_selector.stack.currentIndex()
+            combo_index = self._canvas_selector.canvasCombo.currentIndex()
+            combo_text = self._canvas_selector.canvasCombo.currentText()
+            
+            print(f"DEBUG: stack.currentIndex() = {current_index}")
+            print(f"DEBUG: canvasCombo.currentIndex() = {combo_index}")
+            print(f"DEBUG: canvasCombo.currentText() = '{combo_text}'")
+            
+            return current_index == 0
+        except Exception as e:
+            print(f"DEBUG: Exception in _require_designer_page: {e}")
             return False
 
     def _on_add_clip(self):
@@ -3842,6 +3856,10 @@ class HapticPatternGUI(QMainWindow):
         self.timeline_panel.setMinimumHeight(150)  # Reduced from 200
         self.timeline_panel.setMaximumHeight(200)  # Add maximum height constraint
         self.timeline_panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)  # Change to Fixed
+        
+        if hasattr(self, 'canvas_selector'):
+            self.timeline_panel.attach_canvas_selector(self.canvas_selector)
+        
         parent_layout.addWidget(self.timeline_panel)
 
     def _on_stroke_preview_tick(self):
@@ -4099,12 +4117,24 @@ class HapticPatternGUI(QMainWindow):
         pattern_generator = os.path.dirname(here)          # Pattern_Generator/
         main_gui = os.path.dirname(pattern_generator)      # Main_GUI/
         designer = os.path.join(main_gui, "waveform_designer", "universal_event_designer.py")
+        
+        # Debug : afficher les chemins
+        print(f"here: {here}")
+        print(f"pattern_generator: {pattern_generator}")
+        print(f"main_gui: {main_gui}")
+        print(f"designer: {designer}")
+        print(f"Designer exists: {os.path.exists(designer)}")
+        
         if not os.path.exists(designer):
             QMessageBox.critical(self, "Not found", f"Designer not found:\n{designer}")
             return
+        
         self._designer_proc = QProcess(self)
         self._designer_proc.finished.connect(lambda *_: self.refresh_waveforms())
         self._designer_proc.start(sys.executable, [designer])
+        
+        # Debug : vérifier si le processus s'est lancé
+        print(f"Process started: {self._designer_proc.state()}")
 
     def setup_connection_menu(self):
         """Build 'Connection' menu and move controls from the top bar into it."""
@@ -4660,11 +4690,6 @@ class HapticPatternGUI(QMainWindow):
         actuatorLayout = QVBoxLayout(actuatorGroup)
 
         self.canvas_selector = MultiCanvasSelector()
-        try:
-            if hasattr(self, "timeline_panel"):
-                self.timeline_panel.attach_canvas_selector(self.canvas_selector)
-        except Exception:
-            pass
         self.canvas_selector.selection_changed.connect(self.on_actuator_selection_changed)
         actuatorLayout.addWidget(self.canvas_selector)
         try:

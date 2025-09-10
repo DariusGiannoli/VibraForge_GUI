@@ -148,7 +148,7 @@ def generate_builtin_waveform(
 from event_data_model import HapticEvent, EventCategory, WaveformData
 from waveform_editor_widget import WaveformEditorWidget
 import sys, os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))  # Main_GUI/
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from python_serial_api import python_serial_api
 
 # ---------- theme ----------
@@ -269,18 +269,16 @@ class LibraryTree(QTreeWidget):
         drag = QDrag(self); drag.setMimeData(mime); drag.exec(Qt.DropAction.CopyAction)
 
 class EventLibraryManager:
-    """Manages waveform_library with customized/ and imported/ buckets."""
+    
     def __init__(self):
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        # Find a sensible project root
-        project_root = current_dir
-        for _ in range(3):
-            indicators = ['requirements.txt', 'pyproject.toml', '.git', 'README.md', 'app.py', 'main.py']
-            if any(os.path.exists(os.path.join(project_root, i)) for i in indicators):
-                break
-            parent = os.path.dirname(project_root)
-            if parent == project_root: break
-            project_root = parent
+        current_dir = os.path.dirname(os.path.abspath(__file__))  # .../Main_GUI/waveform_designer
+        main_gui = os.path.dirname(current_dir)                  # .../Main_GUI
+        project_root = os.path.dirname(main_gui)                 # .../VibraForge_GUI
+        
+        # Vérification que c'est bien la racine
+        indicators = ['requirements.txt', 'pyproject.toml', '.git', 'README.md']
+        if not any(os.path.exists(os.path.join(project_root, i)) for i in indicators):
+            print(f"Warning: Project root indicators not found in {project_root}")
         self.lib_root   = os.path.join(project_root, "waveform_library")
         self.custom_dir = os.path.join(self.lib_root, "customized")
         self.import_dir = os.path.join(self.lib_root, "imported")
@@ -293,6 +291,7 @@ class EventLibraryManager:
         if not os.path.exists(init_file):
             with open(init_file, "w", encoding="utf-8") as f:
                 f.write("# Waveform Library\n")
+
     def get_events_directory(self, bucket: str = "customized"):
         if bucket == "imported": return self.import_dir
         if bucket == "root": return self.lib_root
