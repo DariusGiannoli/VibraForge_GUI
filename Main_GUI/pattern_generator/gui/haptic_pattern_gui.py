@@ -36,7 +36,7 @@ from core import PhantomEngine, PreviewBundle
 from core.storage import save_bundle, load_bundle, list_bundles
 main_gui_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(main_gui_dir)
-from python_serial_api import python_serial_api
+from communication import python_serial_api
 from core.vibration_patterns import *
 from gui.widgets.flexible_actuator_selector import FlexibleActuatorSelector
 from gui.widgets.phantom_preview_canvas import PhantomPreviewCanvas
