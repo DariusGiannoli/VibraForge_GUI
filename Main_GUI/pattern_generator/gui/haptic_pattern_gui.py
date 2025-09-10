@@ -4116,14 +4116,7 @@ class HapticPatternGUI(QMainWindow):
         here = os.path.dirname(os.path.abspath(__file__))  # gui/
         pattern_generator = os.path.dirname(here)          # Pattern_Generator/
         main_gui = os.path.dirname(pattern_generator)      # Main_GUI/
-        designer = os.path.join(main_gui, "waveform_designer", "universal_event_designer.py")
-        
-        # Debug : afficher les chemins
-        print(f"here: {here}")
-        print(f"pattern_generator: {pattern_generator}")
-        print(f"main_gui: {main_gui}")
-        print(f"designer: {designer}")
-        print(f"Designer exists: {os.path.exists(designer)}")
+        designer = os.path.join(main_gui, "waveform_designer", "event_designer", "universal_event_designer.py")
         
         if not os.path.exists(designer):
             QMessageBox.critical(self, "Not found", f"Designer not found:\n{designer}")
@@ -4132,9 +4125,6 @@ class HapticPatternGUI(QMainWindow):
         self._designer_proc = QProcess(self)
         self._designer_proc.finished.connect(lambda *_: self.refresh_waveforms())
         self._designer_proc.start(sys.executable, [designer])
-        
-        # Debug : vérifier si le processus s'est lancé
-        print(f"Process started: {self._designer_proc.state()}")
 
     def setup_connection_menu(self):
         """Build 'Connection' menu and move controls from the top bar into it."""
