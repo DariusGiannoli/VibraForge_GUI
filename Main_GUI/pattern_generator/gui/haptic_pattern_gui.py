@@ -4118,7 +4118,7 @@ class HapticPatternGUI(QMainWindow):
         main_gui = os.path.dirname(pattern_generator)      # Main_GUI/
 
         # We will launch the designer as a MODULE so that relative imports work
-        module_path = ["-m", "waveform_designer.event_designer.universal_event_designer"]
+        module_path = ["-m", "waveform_designer.event_designer.main"]
 
         # Prepare process
         self._designer_proc = QProcess(self)

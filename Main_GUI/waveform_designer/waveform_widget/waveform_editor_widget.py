@@ -18,14 +18,9 @@ from PyQt6.QtWidgets import QSlider, QHBoxLayout, QLabel
 from PyQt6.QtGui import QFont
 
 # --- Data model & helpers ---------------------------------------------------
-from ..event_designer.event_data_model import (
-    MIME_WAVEFORM,
-    generate_builtin_waveform,
-    resample_to,
-    load_csv_waveform,
-    HapticEvent,
-    ParameterModifications,
-    WaveformData,
+from ..event_designer.core.event_data_model import (
+    HapticEvent, EventCategory, WaveformData, ParameterModifications,
+    ActuatorMapping, ActuatorPattern, EventMetadata,
 )
 
 # --------------------------------------------------------------------------

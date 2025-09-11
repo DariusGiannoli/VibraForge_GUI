@@ -1,9 +1,8 @@
+# __init__.py
 """
-Event Designer Package
-Contains the event data model and universal event designer.
+Event Designer module for haptic waveform creation and editing.
 """
 
-from .event_data_model import HapticEvent, EventCategory, WaveformData
-from .universal_event_designer import UniversalEventDesigner
+from .main import UniversalEventDesigner
 
-__all__ = ['HapticEvent', 'EventCategory', 'WaveformData', 'UniversalEventDesigner']
+__all__ = ["UniversalEventDesigner"]
