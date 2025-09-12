@@ -543,9 +543,10 @@ class HapticPatternGUI(QMainWindow):
         self.menu_waveform.addAction(self.act_refresh_library)
 
     def _open_waveform_designer(self):
-        here = os.path.dirname(os.path.abspath(__file__))  # gui/
-        pattern_generator = os.path.dirname(here)          # pattern_generator/
-        main_gui = os.path.dirname(pattern_generator)      # Main_GUI/
+        here = os.path.dirname(os.path.abspath(__file__))       # gui/core/
+        gui_dir = os.path.dirname(here)                         # gui/
+        pattern_generator = os.path.dirname(gui_dir)            # pattern_generator/
+        main_gui = os.path.dirname(pattern_generator)           # Main_GUI/
 
         # We will launch the designer as a MODULE so that relative imports work
         module_path = ["-m", "waveform_designer.event_designer.main"]
@@ -918,8 +919,8 @@ class HapticPatternGUI(QMainWindow):
         top.addWidget(QLabel("Renderer:"))
         self.strokeModeCombo = QComboBox()
         self.strokeModeCombo.addItems([
-            "Physical (nearest 1)",
-            "Phantom (2-Act)",
+            # "Physical (nearest 1)",
+            # "Phantom (2-Act)",
             "Phantom (3-Act)"
         ])
         self.strokeModeCombo.setCurrentIndex(2)

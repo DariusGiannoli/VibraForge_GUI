@@ -788,14 +788,6 @@ class FlexibleActuatorSelector(QWidget):
         root.addWidget(self.canvas, 1)
         self.canvas.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
 
-        # Status line
-        status_row = QHBoxLayout()
-        status_row.setContentsMargins(0, 0, 0, 0)
-        status_row.setSpacing(0)
-        self.status_label = QLabel("No actuators — drag from palette or click Create Chain")
-        status_row.addWidget(self.status_label, 1)
-        root.addLayout(status_row)
-
         # Wire signals outward
         self.canvas.selection_changed.connect(self.selection_changed)
         self.canvas.actuator_added.connect(self.actuator_added)
