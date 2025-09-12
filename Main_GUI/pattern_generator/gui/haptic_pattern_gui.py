@@ -1309,7 +1309,7 @@ class TimelinePanel(QWidget):
         # --- data / state ---
         self.model = TimelineModel()
         self.view = TimelineView(self.model)
-        self.view.setMinimumHeight(190)
+        self.view.setMinimumHeight(280)
 
         self._preview_timer = QTimer(self)
         self._preview_timer.setInterval(30)  # ~33 FPS
@@ -1323,23 +1323,83 @@ class TimelinePanel(QWidget):
 
         # --- root layout ---
         root = QVBoxLayout(self)
-        root.setContentsMargins(6, 8, 6, 8)
-        root.setSpacing(6)
+        root.setContentsMargins(6, 4, 6, 6)
+        root.setSpacing(2)
 
-        # ───────────────────────────────── Title row (label + collapsible toggle)
+        # ───────────────────────────────── Title row with all controls
         title_row = QHBoxLayout()
+        title_row.setSpacing(4)
+
+        # Title label
         title_lbl = QLabel("Timeline")
         title_lbl.setStyleSheet("font-weight:600;")
         title_row.addWidget(title_lbl)
+        title_row.addSpacing(12)
+
+        # Control spinboxes
+        title_row.addWidget(QLabel("Start:"))
+        self.startSpin = QDoubleSpinBox()
+        self.startSpin.setRange(0.0, 3600.0)
+        self.startSpin.setDecimals(2)
+        self.startSpin.setSuffix(" s")
+        self.startSpin.setMaximumWidth(80)
+        title_row.addWidget(self.startSpin)
+
+        title_row.addSpacing(6)
+        title_row.addWidget(QLabel("Stop:"))
+        self.endSpin = QDoubleSpinBox()
+        self.endSpin.setRange(0.0, 3600.0)
+        self.endSpin.setDecimals(2) 
+        self.endSpin.setSuffix(" s")
+        self.endSpin.setValue(2.0)
+        self.endSpin.setMaximumWidth(80)
+        title_row.addWidget(self.endSpin)
+
+        title_row.addSpacing(8)
+
+        # Action buttons (left side)
+        self.btnAdd = QPushButton("Add clip")
+        self.btnAdd.setMaximumHeight(24)
+        self.btnAdd.setStyleSheet("font-size: 11px; padding: 2px 6px;")
+        title_row.addWidget(self.btnAdd)
+
+        self.btnRemove = QPushButton("Remove")
+        self.btnRemove.setMaximumHeight(24)
+        self.btnRemove.setStyleSheet("font-size: 11px; padding: 2px 6px;")
+        title_row.addWidget(self.btnRemove)
+
+        self.btnClear = QPushButton("Clear")
+        self.btnClear.setMaximumHeight(24)
+        self.btnClear.setStyleSheet("font-size: 11px; padding: 2px 6px;")
+        title_row.addWidget(self.btnClear)
+
+        # Stretch to push playback buttons to the right
         title_row.addStretch()
 
-        self._paramsToggle = QToolButton()
-        self._paramsToggle.setText("Parameters")
-        self._paramsToggle.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        self._paramsToggle.setArrowType(Qt.ArrowType.RightArrow)
-        self._paramsToggle.setCheckable(True)
-        self._paramsToggle.setChecked(False)  # folded by default
-        title_row.addWidget(self._paramsToggle)
+        # Playback buttons (right side)
+        self.btnPreview = QPushButton("Play preview")
+        self.btnPreview.setMaximumHeight(24)
+        self.btnPreview.setMaximumWidth(80)
+        self.btnPreview.setStyleSheet("font-size: 11px; padding: 2px 6px;")
+        title_row.addWidget(self.btnPreview)
+
+        self.btnDevice = QPushButton("Play on device")
+        self.btnDevice.setMaximumHeight(24)
+        self.btnDevice.setMaximumWidth(85)
+        self.btnDevice.setStyleSheet("font-size: 11px; padding: 2px 6px;")
+        title_row.addWidget(self.btnDevice)
+
+        self.btnStop = QPushButton("Stop")
+        self.btnStop.setMaximumHeight(24)
+        self.btnStop.setMaximumWidth(40)
+        self.btnStop.setStyleSheet("font-size: 11px; padding: 2px 6px;")
+        title_row.addWidget(self.btnStop)
+
+        self.btnSave = QPushButton("Save")
+        self.btnSave.setMaximumHeight(24)
+        self.btnSave.setMaximumWidth(40)
+        self.btnSave.setStyleSheet("font-size: 11px; padding: 2px 6px;")
+        title_row.addWidget(self.btnSave)
 
         root.addLayout(title_row)
 
@@ -1394,55 +1454,24 @@ class TimelinePanel(QWidget):
         self._paramsBox.setMaximumHeight(0)          # collapsed
         self._paramsBox.setMinimumHeight(0)
 
-        def _toggle_params(on: bool):
-            if on:
-                h = self._paramsBox.sizeHint().height()
-                self._paramsBox.setMaximumHeight(h)
-                self._paramsBox.setMinimumHeight(h)
-            else:
-                self._paramsBox.setMaximumHeight(0)
-                self._paramsBox.setMinimumHeight(0)
-            self._paramsToggle.setArrowType(Qt.ArrowType.DownArrow if on else Qt.ArrowType.RightArrow)
-            self._paramsBox.updateGeometry()
-            if self.layout():
-                self.layout().activate()
-
-        self._paramsToggle.toggled.connect(_toggle_params)
-
         root.addWidget(self._paramsBox)
 
-        # ───────────────────────────────── Timeline view
+        # ───────────────────────────────── Timeline view  
         view_wrap = QFrame()
         view_wrap.setObjectName("TimelineViewWrap")
         view_wrap.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        view_wrap.setFrameShape(QFrame.Shape.NoFrame)       # remove rounded border that was peeking
+        view_wrap.setFrameShape(QFrame.Shape.NoFrame)
         vlay = QVBoxLayout(view_wrap)
-        vlay.setContentsMargins(0, 0, 0, 0)                 # no extra padding
+        vlay.setContentsMargins(0, 0, 0, 0)
+        vlay.setSpacing(0)
         vlay.addWidget(self.view)
         root.addWidget(view_wrap)
 
-        root.setStretch(0, 0)   # title row
-        root.setStretch(1, 0)   # params box (fixed height when open)
-        root.setStretch(2, 1)   # timeline view (expands)
-        root.setStretch(3, 0)   # buttons row
+        # Stretch ratios
+        root.setStretch(0, 0)   # title row with all controls
+        root.setStretch(1, 1)   # timeline view (expands)
 
-        # ───────────────────────────────── Playback / Save buttons
-        btns = QHBoxLayout()
-        self.btnPreview = QPushButton("Play preview")
-        self.btnDevice  = QPushButton("Play on device")
-        self.btnStop    = QPushButton("Stop")
-        self.btnSave    = QPushButton("Save")
-        btns.addWidget(self.btnPreview)
-        btns.addWidget(self.btnDevice)
-        btns.addWidget(self.btnStop)
-        btns.addStretch()
-        btns.addWidget(self.btnSave)
-        root.addLayout(btns)
 
-        root.setStretch(0, 0)   # title row
-        root.setStretch(1, 0)   # params box (fixed height when open)
-        root.setStretch(2, 1)   # timeline view (expands)
-        root.setStretch(3, 0)   # buttons row
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         # Let the viewport and its wrapper grow with the panel
@@ -3884,8 +3913,7 @@ class HapticPatternGUI(QMainWindow):
         """Create the timeline panel as a full-width horizontal section."""
         self.timeline_panel = TimelinePanel(self)
         # Reduce minimum height and set fixed height for more compact timeline
-        self.timeline_panel.setMinimumHeight(150)  # Reduced from 200
-        self.timeline_panel.setMaximumHeight(200)  # Add maximum height constraint
+        self.timeline_panel.setMinimumHeight(200)
         self.timeline_panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)  # Change to Fixed
         
         if hasattr(self, 'canvas_selector'):
@@ -4355,10 +4383,10 @@ class HapticPatternGUI(QMainWindow):
 
         # No bottom "Information" panel anymore (frees ~80px)
 
-        # Make the vertical space distribution tighter: workspace ≈ 75%, timeline ≈ 25%
+        # Give timeline 1/3 of vertical space: workspace ≈ 66%, timeline ≈ 33%
         layout.setStretch(0, 0)  # connection bar
-        layout.setStretch(1, 3)  # main workspace (left + right)
-        layout.setStretch(2, 1)  # timeline
+        layout.setStretch(1, 2)  # main workspace (left + right) - 2/3
+        layout.setStretch(2, 1)  # timeline - 1/3
 
         self.showMaximized()
     
