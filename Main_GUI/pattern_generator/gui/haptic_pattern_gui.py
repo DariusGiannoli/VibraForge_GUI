@@ -253,12 +253,6 @@ def centralize_drawn_stroke_playback_in_drawing(gui) -> None:
     _add_widget_to_drawing_tab_end(gui, gb)
 
 class WaveformLibraryManager:
-    """Use the same folder as the Designer: <repo_root>/waveform_library/customized.
-    Falls back to Main_GUI/waveform_library if it has more files. Supports .json/.csv/.haptic.
-    """
-    EXT = (".json", ".csv", ".haptic")
-
-class WaveformLibraryManager:
 
     EXT = (".json", ".csv", ".haptic")
 
