@@ -656,8 +656,8 @@ class MultiCanvasSelector(QWidget):
 
         # Layout
         root = QVBoxLayout(self)
-        root.setContentsMargins(6, 6, 6, 6)
-        root.setSpacing(6)
+        root.setContentsMargins(0, 0, 0, 0)   # remove extra padding around the whole selector
+        root.setSpacing(4)
         root.addLayout(top)
         root.addWidget(self.stack)
 
@@ -1344,31 +1344,32 @@ class TimelinePanel(QWidget):
         root.addLayout(title_row)
 
         # ───────────────────────────────── Collapsible parameters box
-        self._paramsBox = QWidget()
+        self._paramsBox = QFrame(self)                       # dedicated panel
+        self._paramsBox.setObjectName("TimelineParams")
+        self._paramsBox.setFrameShape(QFrame.Shape.StyledPanel)
+        self._paramsBox.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self._paramsBox.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
         params_layout = QVBoxLayout(self._paramsBox)
-        params_layout.setContentsMargins(0, 0, 0, 0)
+        params_layout.setContentsMargins(8, 6, 8, 6)
         params_layout.setSpacing(6)
 
-        # Grid with Start/Stop/Add/Remove/Clear
+        # Grid with Start/Stop/Add/Remove/Clear  (UNCHANGED)
         form = QGridLayout()
         form.setContentsMargins(0, 0, 0, 0)
         form.setHorizontalSpacing(8)
         form.setVerticalSpacing(4)
 
         self.startSpin = QDoubleSpinBox()
-        self.startSpin.setRange(0.0, 3600.0)
-        self.startSpin.setDecimals(2)
-        self.startSpin.setSuffix(" s")
+        self.startSpin.setRange(0.0, 3600.0); self.startSpin.setDecimals(2); self.startSpin.setSuffix(" s")
 
         self.endSpin = QDoubleSpinBox()
-        self.endSpin.setRange(0.0, 3600.0)
-        self.endSpin.setDecimals(2)
-        self.endSpin.setSuffix(" s")
+        self.endSpin.setRange(0.0, 3600.0); self.endSpin.setDecimals(2); self.endSpin.setSuffix(" s")
         self.endSpin.setValue(2.0)
 
-        self.btnAdd = QPushButton("Add clip")
+        self.btnAdd    = QPushButton("Add clip")
         self.btnRemove = QPushButton("Remove selected clip")
-        self.btnClear = QPushButton("Clear timeline")
+        self.btnClear  = QPushButton("Clear timeline")
 
         form.addWidget(QLabel("Start:"), 0, 0)
         form.addWidget(self.startSpin,   0, 1)
@@ -1379,25 +1380,51 @@ class TimelinePanel(QWidget):
         form.addWidget(self.btnRemove,   1, 1, 1, 2)
         form.addWidget(self.btnClear,    1, 3, 1, 2)
 
+        # keep columns flexible so fields don’t stretch weirdly
+        form.setColumnStretch(0, 0)
+        form.setColumnStretch(1, 1)
+        form.setColumnStretch(2, 0)
+        form.setColumnStretch(3, 1)
+        form.setColumnStretch(4, 0)
+
         params_layout.addLayout(form)
 
-        # Toggle behavior
-        self._paramsBox.setVisible(False)
+        # Collapsing by height (prevents overlap)
+        self._paramsBox.setVisible(True)             # always present
+        self._paramsBox.setMaximumHeight(0)          # collapsed
+        self._paramsBox.setMinimumHeight(0)
+
         def _toggle_params(on: bool):
-            self._paramsBox.setVisible(on)
+            if on:
+                h = self._paramsBox.sizeHint().height()
+                self._paramsBox.setMaximumHeight(h)
+                self._paramsBox.setMinimumHeight(h)
+            else:
+                self._paramsBox.setMaximumHeight(0)
+                self._paramsBox.setMinimumHeight(0)
             self._paramsToggle.setArrowType(Qt.ArrowType.DownArrow if on else Qt.ArrowType.RightArrow)
+            self._paramsBox.updateGeometry()
+            if self.layout():
+                self.layout().activate()
+
         self._paramsToggle.toggled.connect(_toggle_params)
 
         root.addWidget(self._paramsBox)
 
         # ───────────────────────────────── Timeline view
         view_wrap = QFrame()
+        view_wrap.setObjectName("TimelineViewWrap")
         view_wrap.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        view_wrap.setFrameShape(QFrame.Shape.StyledPanel)
+        view_wrap.setFrameShape(QFrame.Shape.NoFrame)       # remove rounded border that was peeking
         vlay = QVBoxLayout(view_wrap)
-        vlay.setContentsMargins(4, 4, 4, 4)
+        vlay.setContentsMargins(0, 0, 0, 0)                 # no extra padding
         vlay.addWidget(self.view)
         root.addWidget(view_wrap)
+
+        root.setStretch(0, 0)   # title row
+        root.setStretch(1, 0)   # params box (fixed height when open)
+        root.setStretch(2, 1)   # timeline view (expands)
+        root.setStretch(3, 0)   # buttons row
 
         # ───────────────────────────────── Playback / Save buttons
         btns = QHBoxLayout()
@@ -1411,6 +1438,11 @@ class TimelinePanel(QWidget):
         btns.addStretch()
         btns.addWidget(self.btnSave)
         root.addLayout(btns)
+
+        root.setStretch(0, 0)   # title row
+        root.setStretch(1, 0)   # params box (fixed height when open)
+        root.setStretch(2, 1)   # timeline view (expands)
+        root.setStretch(3, 0)   # buttons row
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         # Let the viewport and its wrapper grow with the panel
@@ -3680,7 +3712,6 @@ class HapticPatternGUI(QMainWindow):
         self._name_widgets_for_qss()
         self.setup_connection_menu()     # build the Connection menu
         self.setup_waveform_menu()
-        self.setup_view_menu()
         self._scan_ports_menu()          # preload menu with ports
         if hasattr(self, "connectionGroup"):
             self.connectionGroup.hide()  # keep widgets for signals, but hide the top bar
@@ -4093,7 +4124,6 @@ class HapticPatternGUI(QMainWindow):
         self.stopButton.setObjectName("stopButton")
         #self.saveButton.setObjectName("saveButton")
         # info boxes
-        self.infoTextEdit.setObjectName("infoTextEdit")
         self.waveformInfoLabel.setObjectName("waveformInfoLabel")
         self.patternDescLabel.setObjectName("patternDescLabel")
 
@@ -4305,7 +4335,7 @@ class HapticPatternGUI(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
-        layout.setSpacing(10)  # Plus d'espace entre sections
+        layout.setSpacing(6)  # Plus d'espace entre sections
         
         # Connection group
         self._create_connection_group(layout)
@@ -4319,13 +4349,17 @@ class HapticPatternGUI(QMainWindow):
         # Right column - Actuator selection  
         self._create_right_column(main_layout)
         
+        # AFTER
         layout.addLayout(main_layout)
         self._create_timeline_panel(layout)
-        
-        # Info section - TOUJOURS visible
-        self._create_info_section(layout)
-        
-        # Maximiser la fenêtre au démarrage pour garantir que tout soit visible
+
+        # No bottom "Information" panel anymore (frees ~80px)
+
+        # Make the vertical space distribution tighter: workspace ≈ 75%, timeline ≈ 25%
+        layout.setStretch(0, 0)  # connection bar
+        layout.setStretch(1, 3)  # main workspace (left + right)
+        layout.setStretch(2, 1)  # timeline
+
         self.showMaximized()
     
     def _create_connection_group(self, layout):
@@ -4705,21 +4739,28 @@ class HapticPatternGUI(QMainWindow):
         """Create right column with actuator selection"""
         rightColumn = QWidget()
         rightColumnLayout = QVBoxLayout(rightColumn)
+        rightColumnLayout.setContentsMargins(0, 0, 0, 0)
+        rightColumnLayout.setSpacing(6)
 
         actuatorGroup = QGroupBox("Actuator Selection & Design")
+        actuatorGroup.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         actuatorLayout = QVBoxLayout(actuatorGroup)
+        actuatorLayout.setContentsMargins(6, 0, 6, 6)   # was default (bigger on some styles)
+        actuatorLayout.setSpacing(6)
 
         self.canvas_selector = MultiCanvasSelector()
         self.canvas_selector.selection_changed.connect(self.on_actuator_selection_changed)
-        actuatorLayout.addWidget(self.canvas_selector)
+        self.canvas_selector.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        actuatorLayout.addWidget(self.canvas_selector, 1)
+
         try:
             if hasattr(self, "drawing_tab") and self.drawing_tab is not None:
                 self.drawing_tab.attach_canvas_selector(self.canvas_selector)
         except Exception:
             pass
 
-        rightColumnLayout.addWidget(actuatorGroup)
-        main_layout.addWidget(rightColumn)
+        rightColumnLayout.addWidget(actuatorGroup, 1)
+        main_layout.addWidget(rightColumn, 1)
     
     def _create_info_section(self, layout):
         """Create info section - ALWAYS VISIBLE but compact"""
@@ -5291,11 +5332,22 @@ class HapticPatternGUI(QMainWindow):
         event.accept()
     
     def _log_info(self, message):
-        """Log information to the text widget"""
+        """Lightweight logger: status bar + stdout (text panel may not exist)."""
         timestamp = time.strftime('%H:%M:%S')
         log_message = f"{timestamp} - {message}"
-        
-        self.infoTextEdit.append(log_message)
+
+        # Show brief status
+        try:
+            if not self.statusBar():
+                self.setStatusBar(QStatusBar(self))
+            self.statusBar().showMessage(message, 4000)
+        except Exception:
+            pass
+
+        # Only append if the panel exists
+        if hasattr(self, "infoTextEdit") and self.infoTextEdit is not None:
+            self.infoTextEdit.append(log_message)
+
         print(log_message)
 
 def main():

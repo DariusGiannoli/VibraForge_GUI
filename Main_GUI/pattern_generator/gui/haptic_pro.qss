@@ -340,3 +340,4 @@ QToolButton#TimelineParamsToggle:checked { background: #DBEAFE; border-color: #9
   border-radius: 5px;
   margin: 0;
 }
+QFrame#TimelineViewWrap { border: none; }

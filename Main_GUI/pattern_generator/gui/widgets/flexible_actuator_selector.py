@@ -44,9 +44,9 @@ from PyQt6.QtWidgets import (
 
 ACTUATOR_SIZE = QSize(42, 42)
 # canvas insets
-CANVAS_PADDING    = 4   # left/right
-CANVAS_TOP_PAD    = 2   # top (instead of the old 40 px)
-CANVAS_BOTTOM_PAD = 2  # bottom (au-dessus de la status line)
+CANVAS_PADDING    = 4
+CANVAS_TOP_PAD    = 0   # was 2
+CANVAS_BOTTOM_PAD = 0   # was 2)
 CANVAS_BG = QColor("#FFFFFF")
 CANVAS_BORDER = QColor("#CBD5E1")  # slate‑300-ish
 SELECTION_COLOR = QColor(25, 113, 194, 180)  # blue overlay
@@ -388,6 +388,9 @@ class ActuatorCanvas(QGraphicsView):
         self.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.BoundingRectViewportUpdate)
         self.setFrameShape(QFrame.Shape.NoFrame)
+        # Fill available space
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setMinimumHeight(560)  # give it headroom so it claims vertical space
 
         # White canvas rect to constrain drops
         self._canvas_rect_item = QGraphicsRectItem()
@@ -764,18 +767,19 @@ class FlexibleActuatorSelector(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
         root = QVBoxLayout(self)
-        root.setContentsMargins(6, 4, 6, 4)
+        root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(4)
 
         # Top bar
         bar = QHBoxLayout()
-        bar.setContentsMargins(0, 0, 0, 0)
-        bar.setSpacing(8)
+        bar.setContentsMargins(6, 0, 6, 2)
+        bar.setSpacing(6)
         self.palette = MiniPaletteBar()
         bar.addWidget(self.palette, 0)
         bar.addStretch(1)
 
         self.btn_create = QPushButton("Create Chain")
+        self.btn_create.setFixedHeight(28)   # keep bar compact
         bar.addWidget(self.btn_create, 0)
         root.addLayout(bar)
 
