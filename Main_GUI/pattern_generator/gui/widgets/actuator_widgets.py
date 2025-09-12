@@ -4,7 +4,7 @@ from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QComboBox, 
                            QPushButton, QStackedWidget, QLabel, QSizePolicy,
                            QMessageBox, QInputDialog)
-from gui.widgets.flexible_actuator_selector import FlexibleActuatorSelector
+from ..widgets.flexible_actuator_selector import FlexibleActuatorSelector
 
 class NodeCanvasWidget(QWidget):
     """

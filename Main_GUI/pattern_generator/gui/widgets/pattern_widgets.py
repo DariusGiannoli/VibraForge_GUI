@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox,
                            QLabel, QPushButton, QLineEdit, QListWidget,
                            QListWidgetItem, QTreeWidget, QTreeWidgetItem,
                            QMenu, QMessageBox, QAbstractItemView)
-from .constants import PREMADE_PATTERNS
+from ..core.constants import PREMADE_PATTERNS
 
 class PatternVisualizationWidget(QWidget):
     """Clean library view with search, info panel, and primary actions."""

@@ -15,8 +15,8 @@ from PyQt6.QtWidgets import (
     QSizePolicy, QMessageBox, QInputDialog
 )
 
-from .data_models import TimelineClip
-from .workers import TimelineDeviceWorker, TimelineModel
+from ..core.data_models import TimelineClip
+from ..utils.workers import TimelineDeviceWorker, TimelineModel
 
 if TYPE_CHECKING:
     from .actuator_widgets import MultiCanvasSelector

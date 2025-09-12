@@ -2,8 +2,8 @@ import time
 import math
 from typing import Optional
 from PyQt6.QtCore import QThread, pyqtSignal, QObject
-from .data_models import TimelineClip
-from .utils import _sample_event_amplitude
+from ..core.data_models import TimelineClip
+from ..utils.utils import _sample_event_amplitude
 
 class TimelineModel(QObject):
     changed = pyqtSignal()

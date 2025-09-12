@@ -1,28 +1,40 @@
 #!/usr/bin/env python3
 """
-Script de lancement pour l'interface GUI du générateur de patterns haptiques
+Entry point for the Haptic Pattern Generator GUI
 """
+
 import sys
 import os
 
-# Ajouter les répertoires nécessaires au PYTHONPATH
-current_dir = os.path.dirname(os.path.abspath(__file__))  # pattern_generator
-gui_dir = os.path.join(current_dir, 'gui')               # pattern_generator/gui
-main_gui_dir = os.path.dirname(current_dir)              # Main_GUI
+# Add the current directory to Python path to ensure imports work
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
 
-# Ajouter gui_dir en premier pour les imports directs des modules gui
-if gui_dir not in sys.path:
-    sys.path.insert(0, gui_dir)
+# Add parent directory for external imports
+parent_dir = os.path.dirname(current_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
 
-# Ajouter main_gui_dir pour waveform_designer et autres
-if main_gui_dir not in sys.path:
-    sys.path.insert(0, main_gui_dir)
+def main():
+    try:
+        # Try the new import path first
+        from gui.core.main_gui import main as gui_main
+        gui_main()
+    except ImportError:
+        try:
+            # Fallback to old import
+            from gui.main_gui import main as gui_main
+            gui_main()
+        except ImportError:
+            try:
+                # Last resort fallback
+                from main_gui import main as gui_main
+                gui_main()
+            except ImportError as e:
+                print(f"Error: Could not import main GUI module: {e}")
+                print("Please ensure the GUI modules are properly installed.")
+                sys.exit(1)
 
 if __name__ == "__main__":
-    try:
-        from gui.main_gui import main
-        main()
-    except ImportError:
-        # Fallback si les imports relatifs ne marchent pas
-        from main_gui import main
-        main()
+    main()

@@ -9,8 +9,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox,
                            QLabel, QPushButton, QCheckBox, QSpinBox, QListWidget,
                            QListWidgetItem, QMenu, QMessageBox, QInputDialog,
                            QSizePolicy, QGridLayout)
-from .managers import DrawingLibraryManager
-from .workers import StrokePlaybackWorker
+from ..utils.managers import DrawingLibraryManager
+from ..utils.workers import StrokePlaybackWorker
 
 # Import circulaire résolu avec TYPE_CHECKING
 from typing import TYPE_CHECKING

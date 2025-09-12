@@ -28,33 +28,32 @@ from PyQt6.QtWidgets import (
 )
 
 
-# Imports locaux avec gestion des imports relatifs/absolus
 try:
-    # Essayer les imports relatifs (quand utilisé comme module)
-    from .constants import PATTERN_PARAMETERS, PREMADE_PATTERNS
-    from .managers import (WaveformLibraryManager, EventLibraryManager, 
-                          PatternLibraryManager, DrawingLibraryManager)
-    from .actuator_widgets import MultiCanvasSelector
-    from .timeline_widgets import TimelinePanel
-    from .drawing_widgets import DrawingStudioTab
-    from .pattern_widgets import UnifiedPatternLibraryWidget
-    from .preview_drivers import PatternPreviewDriver
-    from .workers import PatternWorker, StrokePlaybackWorker
-    from .dialogs import SavePatternDialog
-    from .utils import centralize_drawn_stroke_playback_in_drawing
+    # Relative imports for when used as module
+    from ..core.constants import PATTERN_PARAMETERS, PREMADE_PATTERNS
+    from ..utils.managers import (WaveformLibraryManager, EventLibraryManager, 
+                                PatternLibraryManager, DrawingLibraryManager)
+    from ..widgets.actuator_widgets import MultiCanvasSelector
+    from ..widgets.timeline_widgets import TimelinePanel
+    from ..widgets.drawing_widgets import DrawingStudioTab
+    from ..widgets.pattern_widgets import UnifiedPatternLibraryWidget
+    from ..utils.preview_drivers import PatternPreviewDriver
+    from ..utils.workers import PatternWorker, StrokePlaybackWorker
+    from ..dialogs.dialogs import SavePatternDialog
+    from ..utils.utils import centralize_drawn_stroke_playback_in_drawing
 except ImportError:
-    # Imports absolus (quand exécuté directement)
-    from constants import PATTERN_PARAMETERS, PREMADE_PATTERNS
-    from managers import (WaveformLibraryManager, EventLibraryManager, 
-                         PatternLibraryManager, DrawingLibraryManager)
-    from actuator_widgets import MultiCanvasSelector
-    from timeline_widgets import TimelinePanel
-    from drawing_widgets import DrawingStudioTab
-    from pattern_widgets import UnifiedPatternLibraryWidget
-    from preview_drivers import PatternPreviewDriver
-    from workers import PatternWorker, StrokePlaybackWorker
-    from dialogs import SavePatternDialog
-    from utils import centralize_drawn_stroke_playback_in_drawing
+    # Absolute imports for when executed directly
+    from core.constants import PATTERN_PARAMETERS, PREMADE_PATTERNS
+    from utils.managers import (WaveformLibraryManager, EventLibraryManager, 
+                               PatternLibraryManager, DrawingLibraryManager)
+    from widgets.actuator_widgets import MultiCanvasSelector
+    from widgets.timeline_widgets import TimelinePanel
+    from widgets.drawing_widgets import DrawingStudioTab
+    from widgets.pattern_widgets import UnifiedPatternLibraryWidget
+    from utils.preview_drivers import PatternPreviewDriver
+    from utils.workers import PatternWorker, StrokePlaybackWorker
+    from dialogs.dialogs import SavePatternDialog
+    from utils.utils import centralize_drawn_stroke_playback_in_drawing
 
 # Imports externes
 try:
@@ -1776,7 +1775,7 @@ def main():
     app.setPalette(pal)
 
     # Charger la feuille de style
-    qss_path = os.path.join(os.path.dirname(__file__), "haptic_pro.qss")
+    qss_path = os.path.join(os.path.dirname(__file__), "..", "resources", "haptic_pro.qss")
     if os.path.exists(qss_path):
         with open(qss_path, "r", encoding="utf-8") as f:
             app.setStyleSheet(f.read())
