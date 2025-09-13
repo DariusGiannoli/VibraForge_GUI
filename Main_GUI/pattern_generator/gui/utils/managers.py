@@ -11,7 +11,7 @@ if main_gui not in sys.path:
     sys.path.insert(0, main_gui)
 
 try:
-    from waveform_designer.event_data_model import HapticEvent, WaveformData, load_csv_waveform, EventMetadata, EventCategory
+    from waveform_designer.event_designer.core.event_data_model import HapticEvent, WaveformData, load_csv_waveform, EventMetadata, EventCategory
 except ImportError:
     # Si waveform_designer n'est pas disponible, définir des classes de fallback
     print("Warning: waveform_designer module not found, using fallback classes")

@@ -860,14 +860,15 @@ class FlexibleActuatorSelector(QWidget):
                 node.update()
 
     def _on_selection_changed(self, ids: List[str]):
+        """Version avec log au lieu de status label"""
         if ids:
-            self.status_label.setText(f"Selected: {', '.join(ids)}")
+            print(f"Selected: {', '.join(ids)}")
         else:
             total = len(self.canvas.actuators)
             if total:
-                self.status_label.setText(f"{total} actuators — none selected")
+                print(f"{total} actuators — none selected")
             else:
-                self.status_label.setText("No actuators — drag from palette or click Create Chain")
+                print("No actuators — drag from palette or click Create Chain")
     
     def get_selected_actuators(self) -> List[int]:
         """Return selected actuator ADDRESSES (0..N) so the timeline can use them."""
