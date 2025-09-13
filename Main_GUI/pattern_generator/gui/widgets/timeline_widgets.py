@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ..core.data_models import TimelineClip
-from ..utils.workers import TimelineDeviceWorker, TimelineModel
+from ..utils.workers import TimelineDeviceWorker
 
 if TYPE_CHECKING:
     from .actuator_widgets import MultiCanvasSelector
@@ -215,6 +215,8 @@ class TimelinePanel(QWidget):
     def __init__(self, gui: 'HapticPatternGUI'):
         super().__init__(gui)
         self.gui = gui
+        self._dev_thread = None
+        self._dev_worker = None     
 
         # --- data / state ---
         self.model = TimelineModel()
@@ -233,22 +235,30 @@ class TimelinePanel(QWidget):
 
         # --- root layout ---
         root = QVBoxLayout(self)
-        root.setContentsMargins(6, 4, 6, 6)
-        root.setSpacing(2)
+        self.setContentsMargins(0, 0, 0, 0)     # panel flush to top
+        root.setContentsMargins(6, 0, 6, 6)     # no top margin
+        root.setSpacing(6)                      # small gap between buttons and timeline
 
-        # ───────────────────────────────── Title row with all controls
+
+
         title_row = QHBoxLayout()
-        title_row.setSpacing(4)
+        title_row.setContentsMargins(0, 0, 0, 0)
+        title_row.setSpacing(6)                 # tighter than before
+
+
 
         # Title label
         title_lbl = QLabel("Timeline")
+        title_lbl.setStyleSheet("font-weight:600; font-size:11px;")
         title_lbl.setStyleSheet("font-weight:600;")
         title_row.addWidget(title_lbl)
-        title_row.addSpacing(12)
 
         # Control spinboxes
         title_row.addWidget(QLabel("Start:"))
         self.startSpin = QDoubleSpinBox()
+        self.startSpin.setFixedHeight(27)
+        self.startSpin.setStyleSheet("font-size:10px; padding:0 4px;")
+        self.startSpin.setMaximumWidth(72)
         self.startSpin.setRange(0.0, 3600.0)
         self.startSpin.setDecimals(2)
         self.startSpin.setSuffix(" s")
@@ -258,6 +268,9 @@ class TimelinePanel(QWidget):
         title_row.addSpacing(6)
         title_row.addWidget(QLabel("Stop:"))
         self.endSpin = QDoubleSpinBox()
+        self.endSpin.setFixedHeight(27)
+        self.endSpin.setStyleSheet("font-size:10px; padding:0 4px;")
+        self.endSpin.setMaximumWidth(72)
         self.endSpin.setRange(0.0, 3600.0)
         self.endSpin.setDecimals(2) 
         self.endSpin.setSuffix(" s")
@@ -265,22 +278,15 @@ class TimelinePanel(QWidget):
         self.endSpin.setMaximumWidth(80)
         title_row.addWidget(self.endSpin)
 
-        title_row.addSpacing(8)
 
         # Action buttons (left side)
         self.btnAdd = QPushButton("Add clip")
-        self.btnAdd.setMaximumHeight(24)
-        self.btnAdd.setStyleSheet("font-size: 11px; padding: 2px 6px;")
         title_row.addWidget(self.btnAdd)
 
         self.btnRemove = QPushButton("Remove")
-        self.btnRemove.setMaximumHeight(24)
-        self.btnRemove.setStyleSheet("font-size: 11px; padding: 2px 6px;")
         title_row.addWidget(self.btnRemove)
 
         self.btnClear = QPushButton("Clear")
-        self.btnClear.setMaximumHeight(24)
-        self.btnClear.setStyleSheet("font-size: 11px; padding: 2px 6px;")
         title_row.addWidget(self.btnClear)
 
         # Stretch to push playback buttons to the right
@@ -288,83 +294,26 @@ class TimelinePanel(QWidget):
 
         # Playback buttons (right side)
         self.btnPreview = QPushButton("Play preview")
-        self.btnPreview.setMaximumHeight(24)
         self.btnPreview.setMaximumWidth(80)
-        self.btnPreview.setStyleSheet("font-size: 11px; padding: 2px 6px;")
         title_row.addWidget(self.btnPreview)
 
         self.btnDevice = QPushButton("Play on device")
-        self.btnDevice.setMaximumHeight(24)
         self.btnDevice.setMaximumWidth(85)
-        self.btnDevice.setStyleSheet("font-size: 11px; padding: 2px 6px;")
         title_row.addWidget(self.btnDevice)
 
         self.btnStop = QPushButton("Stop")
-        self.btnStop.setMaximumHeight(24)
         self.btnStop.setMaximumWidth(40)
-        self.btnStop.setStyleSheet("font-size: 11px; padding: 2px 6px;")
         title_row.addWidget(self.btnStop)
 
         self.btnSave = QPushButton("Save")
-        self.btnSave.setMaximumHeight(24)
         self.btnSave.setMaximumWidth(40)
-        self.btnSave.setStyleSheet("font-size: 11px; padding: 2px 6px;")
         title_row.addWidget(self.btnSave)
 
         root.addLayout(title_row)
-
-        # ───────────────────────────────── Collapsible parameters box
-        self._paramsBox = QFrame(self)                       # dedicated panel
-        self._paramsBox.setObjectName("TimelineParams")
-        self._paramsBox.setFrameShape(QFrame.Shape.StyledPanel)
-        self._paramsBox.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self._paramsBox.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-
-        params_layout = QVBoxLayout(self._paramsBox)
-        params_layout.setContentsMargins(8, 6, 8, 6)
-        params_layout.setSpacing(6)
-
-        # Grid with Start/Stop/Add/Remove/Clear  (UNCHANGED)
-        form = QGridLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setHorizontalSpacing(8)
-        form.setVerticalSpacing(4)
-
-        self.startSpin = QDoubleSpinBox()
-        self.startSpin.setRange(0.0, 3600.0); self.startSpin.setDecimals(2); self.startSpin.setSuffix(" s")
-
-        self.endSpin = QDoubleSpinBox()
-        self.endSpin.setRange(0.0, 3600.0); self.endSpin.setDecimals(2); self.endSpin.setSuffix(" s")
-        self.endSpin.setValue(2.0)
-
-        self.btnAdd    = QPushButton("Add clip")
-        self.btnRemove = QPushButton("Remove selected clip")
-        self.btnClear  = QPushButton("Clear timeline")
-
-        form.addWidget(QLabel("Start:"), 0, 0)
-        form.addWidget(self.startSpin,   0, 1)
-        form.addWidget(QLabel("Stop:"),  0, 2)
-        form.addWidget(self.endSpin,     0, 3)
-        form.addWidget(self.btnAdd,      0, 4)
-
-        form.addWidget(self.btnRemove,   1, 1, 1, 2)
-        form.addWidget(self.btnClear,    1, 3, 1, 2)
-
-        # keep columns flexible so fields don’t stretch weirdly
-        form.setColumnStretch(0, 0)
-        form.setColumnStretch(1, 1)
-        form.setColumnStretch(2, 0)
-        form.setColumnStretch(3, 1)
-        form.setColumnStretch(4, 0)
-
-        params_layout.addLayout(form)
-
-        # Collapsing by height (prevents overlap)
-        self._paramsBox.setVisible(True)             # always present
-        self._paramsBox.setMaximumHeight(0)          # collapsed
-        self._paramsBox.setMinimumHeight(0)
-
-        root.addWidget(self._paramsBox)
+        for b in (self.btnAdd, self.btnRemove, self.btnClear,
+                self.btnPreview, self.btnDevice, self.btnStop, self.btnSave):
+            b.setFixedHeight(22)
+            b.setStyleSheet("font-size:10px; padding:0 6px; margin-right:6px;")
 
         # ───────────────────────────────── Timeline view  
         view_wrap = QFrame()
@@ -414,6 +363,24 @@ class TimelinePanel(QWidget):
         """Adjust timeline zoom in px/s with clamping."""
         self._zoom_pxps = float(max(20.0, min(500.0, self._zoom_pxps + delta)))
         self.view.set_pixels_per_second(self._zoom_pxps)
+
+    
+    def _ensure_dev_thread_stopped(self, timeout_ms: int = 1500):
+        """Stop device worker thread (QThread subclass) if running."""
+        if self._dev_worker:
+            try:
+                # cooperative stop if the worker exposes it
+                if hasattr(self._dev_worker, "stop"):
+                    self._dev_worker.stop()
+            except Exception:
+                pass
+            try:
+                if self._dev_worker.isRunning():
+                    self._dev_worker.wait(timeout_ms)
+            finally:
+                self._dev_worker = None
+
+
 
     # Loading/saving
     def to_config(self) -> dict:
@@ -568,24 +535,34 @@ class TimelinePanel(QWidget):
         except Exception:
             pass
 
+    
+    def closeEvent(self, e):
+        self.stop_all()
+        super().closeEvent(e)
+
     # Device playback
     def _play_on_device(self):
-        if self._dev_worker and self._dev_worker.isRunning():
-            QMessageBox.information(self, "Timeline", "Already playing on device.")
-            return
+        # ensure previous run is fully stopped
+        self._ensure_dev_thread_stopped()
+
         if not self.gui.api or not self.gui.api.connected:
             QMessageBox.warning(self, "Hardware", "Please connect to a device first.")
             return
+
         total = max(0.01, self.model.total_duration())
         Av    = int(self.gui.intensitySlider.value())
         fcode = int(self.gui.strokeFreqCode.value() if hasattr(self.gui, "strokeFreqCode") else self.gui.frequencySlider.value())
+
         self._dev_worker = TimelineDeviceWorker(self.gui.api, self.model, total, Av, fcode, tick_ms=50)
         self._dev_worker.log_message.connect(self.gui._log_info)
         self._dev_worker.finished.connect(self._on_device_finished)
         self._dev_worker.start()
+
         self.gui._log_info(f"Timeline device playback: {len(self.model.clips())} clip(s), length ≈ {total:.2f}s")
 
+
     def _on_device_finished(self, ok: bool, msg: str):
+        self._ensure_dev_thread_stopped()
         self.gui._log_info(f"Timeline finished → {msg}")
         self._dev_worker = None
 
