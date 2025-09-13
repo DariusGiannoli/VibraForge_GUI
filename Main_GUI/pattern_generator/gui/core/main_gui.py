@@ -124,6 +124,7 @@ class HapticPatternGUI(QMainWindow):
         self._stroke_preview_timer.setInterval(30)  # ~33 FPS
         self._stroke_preview_timer.timeout.connect(self._on_stroke_preview_tick)
         self._stroke_preview_state = None  # dict with schedule, t0, id_to_xy, idx
+        self._stroke_playing = False
     
     def _preview_drawn_stroke(self):
         """Construit le même schedule que pour le hardware, mais l'anime en UI uniquement."""
@@ -426,11 +427,38 @@ class HapticPatternGUI(QMainWindow):
 
     def _play_drawn_stroke(self):
         """Entry point when user clicks 'Play Drawing'."""
-        if self.is_running:
+        # DEBUG : Vérifications d'état
+        self._log_info(f"DEBUG: _play_drawn_stroke called")
+        self._log_info(f"DEBUG: is_running = {self.is_running}")
+        self._log_info(f"DEBUG: _stroke_worker = {self._stroke_worker}")
+        self._log_info(f"DEBUG: API connected = {self.api.connected if self.api else 'No API'}")
+        if hasattr(self, '_stroke_playing'):
+            self._log_info(f"DEBUG: _stroke_playing = {self._stroke_playing}")
+        
+        # Nettoyer l'état précédent si nécessaire
+        if self._stroke_worker and self._stroke_worker.isRunning():
+            self._log_info("Stopping previous stroke worker...")
+            self._stop_drawn_stroke()
+        
+        # Vérifier les conditions de blocage
+        if self.is_running or (self._stroke_worker and self._stroke_worker.isRunning()):
             QMessageBox.warning(self, "Busy", "A pattern is currently running. Stop it first.")
             return
+            
         if not self.api or not self.api.connected:
             QMessageBox.warning(self, "Hardware", "Please connect to a device first.")
+            return
+
+        # Test simple de l'API avant de commencer
+        try:
+            # Test très bref sur un actuateur
+            self.api.send_command(0, 1, 4, 1)  
+            time.sleep(0.005)  # 5ms seulement
+            self.api.send_command(0, 0, 0, 0)  
+            self._log_info("DEBUG: API test command successful")
+        except Exception as e:
+            self._log_info(f"DEBUG: API test failed: {e}")
+            QMessageBox.warning(self, "API Test", f"API communication test failed: {e}")
             return
 
         data = self._get_overlay_json()
@@ -463,12 +491,86 @@ class HapticPatternGUI(QMainWindow):
         except Exception:
             pass
 
+        # Marquer qu'on est en train de jouer un stroke
+        self._stroke_playing = True
+        
         self._log_info(f"Playing drawn stroke → mode='{mode}', steps={len(schedule)}, step={step_ms}ms, total≈{total_time_s:.2f}s")
         self._stroke_worker = StrokePlaybackWorker(self.api, schedule, self.strokeFreqCode.value())
         self._stroke_worker.log_message.connect(self._log_info)
         self._stroke_worker.finished.connect(self._on_stroke_finished)
         self._stroke_worker.start()
         self._stroke_worker.step_started.connect(self._on_stroke_step_started)
+    
+    def _test_single_actuator(self):
+        """Test un seul actuateur pour vérifier que l'API fonctionne"""
+        if not self.api or not self.api.connected:
+            QMessageBox.warning(self, "Test", "Please connect first")
+            return
+            
+        selected = self._get_selected_actuators()
+        if not selected:
+            QMessageBox.information(self, "Test", "Please select at least one actuator")
+            return
+            
+        try:
+            actuator_id = selected[0]
+            intensity = self.intensitySlider.value()
+            freq = self.strokeFreqCode.value() if hasattr(self, 'strokeFreqCode') else 4
+            
+            self._log_info(f"Testing actuator {actuator_id} with intensity {intensity}, freq {freq}")
+            
+            # Allumer
+            self.api.send_command(actuator_id, intensity, freq, 1)
+            time.sleep(0.5)  # 500ms
+            # Éteindre
+            self.api.send_command(actuator_id, 0, 0, 0)
+            
+            self._log_info("Single actuator test completed")
+            
+        except Exception as e:
+            self._log_info(f"Single actuator test failed: {e}")
+            QMessageBox.critical(self, "Test Failed", f"Error: {e}")
+
+    def _stop_drawn_stroke(self):
+        """Arrêter proprement le drawn stroke"""
+        if self._stroke_worker and self._stroke_worker.isRunning():
+            self._stroke_worker.stop()
+            if not self._stroke_worker.wait(3000):
+                self._log_info("Warning: Stroke worker thread did not stop gracefully")
+                self._stroke_worker.terminate()
+                self._stroke_worker.wait(1000)
+            
+            # IMPORTANT : Nettoyer la référence immédiatement
+            self._stroke_worker = None
+            
+            # AJOUT : Réinitialiser l'état de lecture
+            self._stroke_playing = False
+            
+            # Éteindre tous les actuateurs avec un délai pour être sûr
+            try:
+                # Éteindre d'abord les actuateurs sélectionnés
+                selected_actuators = self._get_selected_actuators()
+                for aid in selected_actuators:
+                    self.api.send_command(aid, 0, 0, 0)
+                
+                # Puis faire un nettoyage plus large pour être sûr
+                for aid in range(32):  # éteindre les 32 premiers actuateurs
+                    self.api.send_command(aid, 0, 0, 0)
+                    
+            except Exception as e:
+                self._log_info(f"Error stopping actuators: {e}")
+            
+            # Nettoyer l'interface
+            try:
+                self._stroke_preview_timer.stop()
+                self.canvas_selector.clear_preview()
+                ov = getattr(self.drawing_tab, "_overlay", None)
+                if ov and hasattr(ov, "clear_preview_marker"):
+                    ov.clear_preview_marker()
+            except Exception:
+                pass
+                
+            self._log_info("Drawn stroke: stopped and cleaned")
     
     def _on_stroke_step_started(self, idx: int, bursts: list, pt: tuple):
         ov = getattr(self.drawing_tab, "_overlay", None)
@@ -491,31 +593,23 @@ class HapticPatternGUI(QMainWindow):
             pass
 
 
-    def _stop_drawn_stroke(self):
-        if self._stroke_worker and self._stroke_worker.isRunning():
-            self._stroke_worker.stop()
-            self._stroke_worker.wait(1000)
-            # ensure everything is off
-            try:
-                for aid in range(128):
-                    self.api.send_command(aid, 0, 0, 0)
-            except Exception:
-                pass
-            try:
-                self._stroke_preview_timer.stop()
-                self.canvas_selector.clear_preview()
-                ov = getattr(self.drawing_tab, "_overlay", None)
-                if ov and hasattr(ov, "clear_preview_marker"):
-                    ov.clear_preview_marker()
-            except Exception:
-                pass
-            self._log_info("Drawn stroke: stop requested")
-
-
     def _on_stroke_finished(self, ok: bool, msg: str):
+        """Callback quand le stroke worker termine - VERSION DOUCE"""
+        # Nettoyer l'état
         self._stroke_worker = None
-        # safety: stop selected actuators (same behavior as patterns)
-        self._force_stop_selected_actuators()
+        self._stroke_playing = False
+        
+        try:
+            selected_actuators = self._get_selected_actuators()
+            if selected_actuators:
+                self._log_info(f"DEBUG: Cleaning up selected actuators: {selected_actuators}")
+                for aid in selected_actuators:
+                    self.api.send_command(aid, 0, 0, 0)
+            else:
+                self._log_info("DEBUG: No selected actuators to clean up")
+        except Exception as e:
+            self._log_info(f"Error in actuator cleanup: {e}")
+        
         self._log_info(f"Drawn stroke finished → {msg}")
 
     def _name_widgets_for_qss(self):
@@ -919,56 +1013,52 @@ class HapticPatternGUI(QMainWindow):
         top.addWidget(QLabel("Renderer:"))
         self.strokeModeCombo = QComboBox()
         self.strokeModeCombo.addItems([
-            # "Physical (nearest 1)",
-            # "Phantom (2-Act)",
+            "Physical (nearest 1)",
             "Phantom (3-Act)"
         ])
-        self.strokeModeCombo.setCurrentIndex(2)
-        # Limiter la largeur du combobox
+        self.strokeModeCombo.setCurrentIndex(0)  # Commencer par Physical pour debug
         self.strokeModeCombo.setMaximumWidth(200)
         top.addWidget(self.strokeModeCombo)
         top.addStretch()
         v.addLayout(top)
 
-        # Row 2: controls avec layout grid pour un meilleur contrôle
+        # Row 2: controls 
         controls_layout = QGridLayout()
         controls_layout.setContentsMargins(0, 0, 0, 0)
         controls_layout.setHorizontalSpacing(8)
         controls_layout.setVerticalSpacing(6)
 
-        # Total time applies only to drawn-stroke playback (preview/device)
         self.durationSpinBox = QDoubleSpinBox()
         self.durationSpinBox.setRange(0.1, 600.0)
-        self.durationSpinBox.setValue(2.0)
+        self.durationSpinBox.setValue(1.0)  # Plus court pour debug
         self.durationSpinBox.setDecimals(2)
         self.durationSpinBox.setSuffix(" s")
-        # CORRECTION: Limiter la largeur du spinbox
         self.durationSpinBox.setMaximumWidth(100)
         self.durationSpinBox.setMinimumWidth(80)
-        
+            
         controls_layout.addWidget(QLabel("Total time (drawn stroke):"), 0, 0)
         controls_layout.addWidget(self.durationSpinBox, 0, 1)
 
-        # Step duration (≤69 ms) — SOA depends on this; overlap-free if ≤ 69 ms
         self.strokeStepMs = QSpinBox()
         self.strokeStepMs.setRange(20, 69)
         self.strokeStepMs.setValue(60)
         self.strokeStepMs.setSuffix(" ms")
-        # CORRECTION: Limiter la largeur du spinbox
         self.strokeStepMs.setMaximumWidth(100)
         self.strokeStepMs.setMinimumWidth(80)
-        
+            
         controls_layout.addWidget(QLabel("Step duration (≤69 ms):"), 1, 0)
         controls_layout.addWidget(self.strokeStepMs, 1, 1)
 
-        # Ajouter un stretch à droite pour éviter l'expansion
         controls_layout.setColumnStretch(2, 1)
-        
         v.addLayout(controls_layout)
 
-        # Buttons
+        # Buttons avec test
         btns = QHBoxLayout()
-        self.previewDrawingBtn = QPushButton("Preview (no device)")
+        #self.testActuatorBtn = QPushButton("Test Selected") (decomment if you want to test on a particular actuator)
+        #self.testActuatorBtn.setStyleSheet("background-color: #FFA500; font-weight: bold;")
+        #btns.addWidget(self.testActuatorBtn)
+        
+        self.previewDrawingBtn = QPushButton("Preview")
         btns.addWidget(self.previewDrawingBtn)
         self.playDrawingBtn = QPushButton("Play Drawing")
         self.stopDrawingBtn = QPushButton("Stop")
@@ -1222,6 +1312,8 @@ class HapticPatternGUI(QMainWindow):
 
         self.playDrawingBtn.clicked.connect(self._play_drawn_stroke)
         self.stopDrawingBtn.clicked.connect(self._stop_drawn_stroke)
+        if hasattr(self, 'testActuatorBtn'):
+            self.testActuatorBtn.clicked.connect(self._test_single_actuator)
     
     def refresh_waveforms(self):
         self.waveformComboBox.clear()
@@ -1682,7 +1774,13 @@ class HapticPatternGUI(QMainWindow):
             self._log_info("Pattern stop requested")
         
         if self.pattern_worker and self.pattern_worker.isRunning():
-            self.pattern_worker.wait(1000)
+            # Attendre que le pattern worker s'arrête proprement
+            if not self.pattern_worker.wait(2000):
+                self._log_info("Warning: Pattern worker thread did not stop gracefully")
+                self.pattern_worker.terminate()
+                self.pattern_worker.wait(1000)
+            self.pattern_worker = None
+            
         try:
             self.preview_driver.stop()
         except Exception:
@@ -1721,15 +1819,50 @@ class HapticPatternGUI(QMainWindow):
         self._log_info("Pattern completed")
     
     def closeEvent(self, event):
-        """Handle window closing"""
+        """Handle window closing - amélioration du nettoyage des threads"""
+        self._log_info("Application closing - cleaning up threads...")
+        
+        # Arrêter tous les workers en cours
         self.emergency_stop()
-        if self.api.connected:
-            self.api.disconnect_serial_device()
+        
+        # Arrêter le stroke worker avec timeout plus long
+        if hasattr(self, '_stroke_worker') and self._stroke_worker and self._stroke_worker.isRunning():
+            self._stroke_worker.stop()
+            if not self._stroke_worker.wait(3000):
+                self._log_info("Force terminating stroke worker")
+                self._stroke_worker.terminate()
+                self._stroke_worker.wait(1000)
+            self._stroke_worker = None
+        
+        # Arrêter le pattern worker
+        if hasattr(self, 'pattern_worker') and self.pattern_worker and self.pattern_worker.isRunning():
+            if not self.pattern_worker.wait(2000):
+                self._log_info("Force terminating pattern worker")
+                self.pattern_worker.terminate()
+                self.pattern_worker.wait(1000)
+            self.pattern_worker = None
+        
+        # Arrêter tous les timers
+        if hasattr(self, '_stroke_preview_timer'):
+            self._stroke_preview_timer.stop()
+        if hasattr(self, 'preview_timer'):
+            self.preview_timer.stop()
+        
+        # Arrêter le timeline panel
         try:
             if hasattr(self, "timeline_panel") and self.timeline_panel:
                 self.timeline_panel.stop_all()
-        except Exception:
-            pass
+        except Exception as e:
+            self._log_info(f"Error stopping timeline: {e}")
+        
+        # Déconnecter l'API
+        if hasattr(self, 'api') and self.api and self.api.connected:
+            try:
+                self.api.disconnect_serial_device()
+            except Exception as e:
+                self._log_info(f"Error disconnecting API: {e}")
+        
+        self._log_info("Cleanup completed")
         event.accept()
     
     def _log_info(self, message):
